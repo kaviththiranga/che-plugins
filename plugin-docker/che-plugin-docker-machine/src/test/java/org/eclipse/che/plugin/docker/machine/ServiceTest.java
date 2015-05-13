@@ -266,6 +266,7 @@ public class ServiceTest {
         int counter = 0;
         while (++counter < 10) {
             try {
+                LOG.error("check machine " + machine.getId());
                 machineManager.getMachine(machine.getId());
             } catch (NotFoundException e) {
                 return;
