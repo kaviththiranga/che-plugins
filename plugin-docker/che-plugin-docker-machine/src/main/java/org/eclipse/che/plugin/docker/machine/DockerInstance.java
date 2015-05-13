@@ -172,10 +172,10 @@ public class DockerInstance implements Instance {
     @Override
     public void destroy() throws MachineException {
         try {
-            LOG.error("start remove container");
+            LOG.error("start remove container " + container);
             docker.killContainer(container);
             docker.removeContainer(container, true, true);
-            LOG.error("container removed");
+            LOG.error("container removed " + container);
         } catch (IOException e) {
             throw new MachineException(e.getLocalizedMessage());
         }
