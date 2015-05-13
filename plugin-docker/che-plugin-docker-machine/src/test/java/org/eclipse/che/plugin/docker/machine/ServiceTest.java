@@ -14,6 +14,7 @@ import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.core.util.LineConsumer;
 import org.eclipse.che.api.core.util.ValueHolder;
 import org.eclipse.che.api.machine.server.MachineImpl;
@@ -29,6 +30,7 @@ import org.eclipse.che.api.machine.shared.dto.CommandDescriptor;
 import org.eclipse.che.api.machine.shared.dto.CreateMachineFromRecipe;
 import org.eclipse.che.api.machine.shared.dto.CreateMachineFromSnapshot;
 import org.eclipse.che.api.machine.shared.dto.MachineDescriptor;
+import org.eclipse.che.api.machine.shared.dto.MachineStateEvent;
 import org.eclipse.che.api.machine.shared.dto.ProcessDescriptor;
 import org.eclipse.che.api.machine.shared.dto.RecipeDescriptor;
 import org.eclipse.che.plugin.docker.client.AuthConfig;
@@ -263,15 +265,26 @@ public class ServiceTest {
 
         assertEquals(MachineState.DESTROYING, machine.getState());
 
-        int counter = 0;
-        while (++counter < 10) {
-            try {
-                LOG.error("check machine " + machine.getId());
-                machineManager.getMachine(machine.getId());
-            } catch (NotFoundException e) {
-                return;
+        final ValueHolder<Boolean> valueHolder = new ValueHolder<>();
+        eventService.subscribe(new EventSubscriber<MachineStateEvent>() {
+            @Override
+            public void onEvent(MachineStateEvent machineStateEvent) {
+                if (machineStateEvent.getMachineId().equals(machine.getId())) {
+                    if (machineStateEvent.getEventType() == MachineStateEvent.EventType.DESTROYED) {
+                        valueHolder.set(true);
+                    } else {
+                        valueHolder.set(false);
+                    }
+                }
             }
-            Thread.sleep(500);
+        });
+
+        assertTrue(valueHolder.get());
+
+        try {
+            machineManager.getMachine(machine.getId());
+        } catch (NotFoundException e) {
+            return;
         }
         fail();
     }
