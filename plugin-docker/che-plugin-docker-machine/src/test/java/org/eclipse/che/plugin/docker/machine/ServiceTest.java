@@ -47,6 +47,8 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.user.User;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.mockito.testng.MockitoTestNGListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -82,6 +84,7 @@ import static org.testng.Assert.fail;
  */
 @Listeners(value = {MockitoTestNGListener.class})
 public class ServiceTest {
+    private static final Logger       LOG          = LoggerFactory.getLogger(ServiceTest.class);
     private static final String       USER         = "userId";
     private static final String       SNAPSHOT_ID  = "someSnapshotId";
     private static       LineConsumer lineConsumer = new StdErrLineConsumer();
@@ -372,7 +375,11 @@ public class ServiceTest {
 
         machineService.stopProcess(machine.getId(), processes.get(0).getPid());
 
-        assertTrue(machineService.getProcesses(machine.getId()).isEmpty());
+        final List<ProcessDescriptor> existingProcesses = machineService.getProcesses(machine.getId());
+        for (ProcessDescriptor existingProcess : existingProcesses) {
+            LOG.error(existingProcess.toString());
+        }
+        assertTrue(existingProcesses.isEmpty());
     }
 
     @Test(expectedExceptions = NotFoundException.class, expectedExceptionsMessageRegExp = "Process with pid .* not found")

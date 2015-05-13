@@ -29,6 +29,8 @@ import org.eclipse.che.api.machine.server.spi.InstanceMetadata;
 import org.eclipse.che.api.machine.server.spi.InstanceProcess;
 import org.eclipse.che.api.machine.shared.ProjectBinding;
 import org.eclipse.che.commons.lang.NameGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -44,6 +46,7 @@ import java.util.regex.Pattern;
  * @author Alexander Garagatyi
  */
 public class DockerInstance implements Instance {
+    private static final Logger        LOG                   = LoggerFactory.getLogger(DockerInstance.class);
     private static final AtomicInteger pidSequence           = new AtomicInteger(1);
     private static final String        PID_FILE_TEMPLATE     = "/tmp/docker-exec-%s.pid";
     private static final Pattern       PID_FILE_PATH_PATTERN = Pattern.compile(String.format(PID_FILE_TEMPLATE, "([0-9]+)"));
@@ -169,8 +172,10 @@ public class DockerInstance implements Instance {
     @Override
     public void destroy() throws MachineException {
         try {
+            LOG.error("start remove container");
             docker.killContainer(container);
             docker.removeContainer(container, true, true);
+            LOG.error("container removed");
         } catch (IOException e) {
             throw new MachineException(e.getLocalizedMessage());
         }
